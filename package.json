@@ -7,7 +7,7 @@
     "start": "node index.js",
     "dev": "nodemon index.js",
     "build:ui": "powershell Remove-Item -r -fo build;cd ../2022-fso-osa3-puhlu-front/;npm run build;cp -r build ../2022-fso-osa3-puhlu-back/",
-    "deploy:full": "powershell npm run build:ui ; git add . ; git commit -m \"uibuild\" ; git push heroku master; npm run deploy",
+    "deploy:full": "powershell npm run build:ui ; git add . ; git commit -m \"uibuild\" ; git push heroku master",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Antti-Jussi Lakanen",

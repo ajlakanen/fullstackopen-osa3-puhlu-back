@@ -1,7 +1,9 @@
+require("dotenv").config();
 const express = require("express");
 const morgan = require("morgan");
 const app = express();
 const cors = require("cors");
+const Person = require("./models/person");
 
 app.use(express.json());
 app.use(cors());
@@ -56,19 +58,15 @@ app.get("/", (req, res) => {
 });
 
 app.get(`${BASEURL}`, (req, res) => {
-  res.json(persons);
+  Person.find({}).then((persons) => {
+    res.json(persons);
+  });
 });
 
 app.get(`${BASEURL}/:id`, (request, response) => {
-  const id = Number(request.params.id);
-  const person = persons.find((p) => {
-    return p.id === id;
-  });
-  if (person) {
+  Person.findById(request.params.id).then((person) => {
     response.json(person);
-  } else {
-    response.status(404).end();
-  }
+  });
 });
 
 app.get("/info", (req, res) => {
@@ -99,14 +97,16 @@ app.post(`${BASEURL}`, (request, response) => {
     return;
   }
 
-  // console.log(request.get("Content-Type"));
-  const person = {
+  const person = new Person({
     name: body.name,
     number: body.number,
-    id: generateId(),
-  };
-  persons = persons.concat(person);
-  response.json(person);
+    //id: generateId()
+  });
+  //persons = persons.concat(person);
+  //response.json(person);
+  person.save().then((savedPerson) => {
+    response.json(savedPerson);
+  });
 });
 
 app.delete(`${BASEURL}/:id`, (request, response) => {

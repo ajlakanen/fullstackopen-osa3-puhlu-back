@@ -70,10 +70,11 @@ app.get(`${BASEURL}/:id`, (request, response) => {
 });
 
 app.get("/info", (req, res) => {
-  const length = persons.length;
-  res.send(
-    `<p>Phonebook has info for ${length} people.</p><p>${new Date()}</p>`
-  );
+  Person.countDocuments({}, function (err, count) {
+    res.send(
+      `<p>Phonebook has info for ${count} people.</p><p>${new Date()}</p>`
+    );
+  });
 });
 
 const generateId = () => {

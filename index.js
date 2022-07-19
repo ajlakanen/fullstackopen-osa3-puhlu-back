@@ -30,29 +30,6 @@ app.use(
 
 const BASEURL = "/api/persons";
 
-let persons = [
-  {
-    id: 1,
-    name: "Arto Hellas",
-    number: "0400-123123",
-  },
-  {
-    id: 2,
-    name: "Ada Lovelace",
-    number: "0400-123123",
-  },
-  {
-    id: 3,
-    name: "Dan Abramov",
-    number: "0400-123123",
-  },
-  {
-    id: 4,
-    name: "Mary Poppendick",
-    number: "0400-123123",
-  },
-];
-
 app.get("/", (req, res) => {
   res.send("<h1>Hello Worldss!</h1>");
 });
@@ -63,7 +40,7 @@ app.get(`${BASEURL}`, (req, res) => {
   });
 });
 
-app.get(`${BASEURL}/:id`, (request, response) => {
+app.get(`${BASEURL}/:id`, (request, response, next) => {
   Person.findById(request.params.id)
     .then((person) => {
       if (person) {
@@ -72,10 +49,11 @@ app.get(`${BASEURL}/:id`, (request, response) => {
         response.status(404).end();
       }
     })
-    .catch((error) => {
-      console.log(error);
-      response.status(400).send({ error: "malformatted id" });
-    });
+    // .catch((error) => {
+    //   console.log(error);
+    //   response.status(400).send({ error: "malformatted id" });
+    // });
+    .catch((error) => next(error));
 });
 
 app.get("/info", (req, res) => {
@@ -87,8 +65,8 @@ app.get("/info", (req, res) => {
 });
 
 const generateId = () => {
-  //const maxId = notes.length > 0 ? Math.max(...notes.map((n) => n.id)) : 0;
-  //return maxId + 1;
+  // const maxId = notes.length > 0 ? Math.max(...notes.map((n) => n.id)) : 0;
+  // return maxId + 1;
   return Math.floor(1000 * Math.random());
 };
 
@@ -100,12 +78,12 @@ app.post(`${BASEURL}`, (request, response) => {
     });
     return;
   }
-  if (persons.find((p) => p.name === body.name)) {
+  /*if (persons.find((p) => p.name === body.name)) {
     response.status(400).json({
       error: "name must be unique",
     });
     return;
-  }
+  }*/
 
   const person = new Person({
     name: body.name,
@@ -124,6 +102,26 @@ app.delete(`${BASEURL}/:id`, (request, response) => {
   persons = persons.filter((p) => p.id !== id);
   response.status(204).end();
 });
+
+const unknownEndpoint = (request, response) => {
+  response.status(404).send({ error: "unknown endpoint" });
+};
+
+// olemattomien osoitteiden käsittely
+app.use(unknownEndpoint);
+
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message);
+
+  if (error.name === "CastError") {
+    return response.status(400).send({ error: "malformatted id" });
+  }
+
+  next(error);
+};
+
+// tämä tulee kaikkien muiden middlewarejen rekisteröinnin jälkeen!
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 3001;
 

@@ -70,42 +70,42 @@ const generateId = () => {
   return Math.floor(1000 * Math.random());
 };
 
-app.post(`${BASEURL}`, (request, response) => {
+app.post(`${BASEURL}`, (request, response, next) => {
   const body = request.body;
-  /* Alla oleva virhe käsitellään frontissa.
+  /* Alla oleva virhe käsitellään mongoosessa.
    * Onko käsittely backissä tarpeen?
    */
-  if (!body.name || !body.number) {
-    response.status(400).json({
-      error: "name or number missing",
-    });
-    return;
-  }
-
-  /*if (persons.find((p) => p.name === body.name)) {
-    response.status(400).json({
-      error: "name must be unique",
-    });
-    return;
-  }*/
+  // if (!body.name || !body.number) {
+  //   response.status(400).json({
+  //     error: "name or number missing",
+  //   });
+  //   return;
+  // }
 
   const person = new Person({
     name: body.name,
     number: body.number,
   });
-  person.save().then((savedPerson) => {
-    response.json(savedPerson);
-  });
+  person
+    .save()
+    .then((savedPerson) => {
+      response.json(savedPerson);
+    })
+    .catch((error) => next(error));
 });
 
 app.put(`${BASEURL}/:id`, (request, response, next) => {
   console.log("put");
-  const body = request.body;
+  const { name, number } = request.body;
   const person = {
-    name: body.name,
-    number: body.number,
+    oldName: request.body.name,
+    newNumber: request.body.number,
   };
-  Person.findByIdAndUpdate(request.params.id, person, { new: true })
+  Person.findByIdAndUpdate(
+    request.params.id,
+    { name, number },
+    { new: true, runValidators: true, context: "query" }
+  )
     .then((updatedPerson) => {
       response.json(updatedPerson);
     })
@@ -132,6 +132,8 @@ const errorHandler = (error, request, response, next) => {
   console.error(error.message);
   if (error.name === "CastError") {
     return response.status(400).send({ error: "malformatted id" });
+  } else if (error.name === "ValidationError") {
+    return response.status(400).json({ error: error.message });
   }
   next(error);
 };

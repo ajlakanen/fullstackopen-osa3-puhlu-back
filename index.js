@@ -64,9 +64,18 @@ app.get(`${BASEURL}`, (req, res) => {
 });
 
 app.get(`${BASEURL}/:id`, (request, response) => {
-  Person.findById(request.params.id).then((person) => {
-    response.json(person);
-  });
+  Person.findById(request.params.id)
+    .then((person) => {
+      if (person) {
+        response.json(person);
+      } else {
+        response.status(404).end();
+      }
+    })
+    .catch((error) => {
+      console.log(error);
+      response.status(400).send({ error: "malformatted id" });
+    });
 });
 
 app.get("/info", (req, res) => {

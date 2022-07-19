@@ -72,12 +72,16 @@ const generateId = () => {
 
 app.post(`${BASEURL}`, (request, response) => {
   const body = request.body;
+  /* Alla oleva virhe käsitellään frontissa.
+   * Onko käsittely backissä tarpeen?
+   */
   if (!body.name || !body.number) {
     response.status(400).json({
       error: "name or number missing",
     });
     return;
   }
+
   /*if (persons.find((p) => p.name === body.name)) {
     response.status(400).json({
       error: "name must be unique",
@@ -88,19 +92,33 @@ app.post(`${BASEURL}`, (request, response) => {
   const person = new Person({
     name: body.name,
     number: body.number,
-    //id: generateId()
   });
-  //persons = persons.concat(person);
-  //response.json(person);
   person.save().then((savedPerson) => {
     response.json(savedPerson);
   });
 });
 
-app.delete(`${BASEURL}/:id`, (request, response) => {
+app.put(`${BASEURL}/:id`, (request, response, next) => {
+  console.log("put");
+  const body = request.body;
+  const person = {
+    name: body.name,
+    number: body.number,
+  };
+  Person.findByIdAndUpdate(request.params.id, person, { new: true })
+    .then((updatedPerson) => {
+      response.json(updatedPerson);
+    })
+    .catch((error) => next(error));
+});
+
+app.delete(`${BASEURL}/:id`, (request, response, next) => {
   const id = Number(request.params.id);
-  persons = persons.filter((p) => p.id !== id);
-  response.status(204).end();
+  Person.findByIdAndRemove(request.params.id)
+    .then((result) => {
+      response.status(204).end();
+    })
+    .catch((error) => next(error));
 });
 
 const unknownEndpoint = (request, response) => {
@@ -112,11 +130,9 @@ app.use(unknownEndpoint);
 
 const errorHandler = (error, request, response, next) => {
   console.error(error.message);
-
   if (error.name === "CastError") {
     return response.status(400).send({ error: "malformatted id" });
   }
-
   next(error);
 };
 

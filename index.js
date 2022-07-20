@@ -8,7 +8,7 @@ const Person = require("./models/person");
 app.use(express.json());
 app.use(cors());
 app.use(express.static("build"));
-app.use(morgan("tiny", { skip: (req, res) => req.method === "POST" }));
+app.use(morgan("tiny", { skip: (req) => req.method === "POST" }));
 
 const requestLogger = (request, response, next) => {
   console.log("Method:", request.method);
@@ -24,7 +24,7 @@ morgan.token("data", (req) => JSON.stringify(req.body));
 app.use(
   morgan(
     ":method :url :status :res[content-length] - :response-time ms :data",
-    { skip: (req, res) => req.method !== "POST" }
+    { skip: (req) => req.method !== "POST" }
   )
 );
 
@@ -64,12 +64,6 @@ app.get("/info", (req, res) => {
   });
 });
 
-const generateId = () => {
-  // const maxId = notes.length > 0 ? Math.max(...notes.map((n) => n.id)) : 0;
-  // return maxId + 1;
-  return Math.floor(1000 * Math.random());
-};
-
 app.post(`${BASEURL}`, (request, response, next) => {
   const body = request.body;
   /* Alla oleva virhe käsitellään mongoosessa.
@@ -97,10 +91,6 @@ app.post(`${BASEURL}`, (request, response, next) => {
 app.put(`${BASEURL}/:id`, (request, response, next) => {
   console.log("put");
   const { name, number } = request.body;
-  const person = {
-    oldName: request.body.name,
-    newNumber: request.body.number,
-  };
   Person.findByIdAndUpdate(
     request.params.id,
     { name, number },
@@ -113,9 +103,8 @@ app.put(`${BASEURL}/:id`, (request, response, next) => {
 });
 
 app.delete(`${BASEURL}/:id`, (request, response, next) => {
-  const id = Number(request.params.id);
   Person.findByIdAndRemove(request.params.id)
-    .then((result) => {
+    .then(() => {
       response.status(204).end();
     })
     .catch((error) => next(error));
